@@ -1,6 +1,8 @@
 const path = require('path')
-const { VueLoaderPlugin } = require('vue-loader')
-const isDev = process.env.NODE_ENV=='development'
+const {
+    VueLoaderPlugin
+} = require('vue-loader')
+const isDev = process.env.NODE_ENV == 'development'
 
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 
@@ -14,23 +16,37 @@ module.exports = {
     },
     module: {
         rules: [{
-            test: /\.vue$/,
-            loader: 'vue-loader'
-        }]
+                test: /\.vue$/,
+                loader: 'vue-loader'
+            },
+            {
+                test: /\.scss$/,
+                use: [
+                    { loader: 'style-loader' },
+                    {
+                      loader: 'css-loader',
+                      options: {
+                        modules: true,
+                      },
+                    },
+                    { loader: 'sass-loader' },
+                  ]
+            }
+        ]
     },
     plugins: [
         new VueLoaderPlugin(),
         new HtmlWebpackPlugin({
-            template:'./src/index.html',
+            template: './src/index.html',
             inject: 'body'
         })
-        ]
+    ]
 }
 
-if(isDev){
-        config.devtool='cheap-module-eval-source-map'//生成map文件
-        config.devServer={
-            port:8081,
-            host:'0.0.0.0'//使用本机ip也可以访问
-        }
+if (isDev) {
+    config.devtool = 'cheap-module-eval-source-map' //生成map文件
+    config.devServer = {
+        port: 8081,
+        host: '0.0.0.0' //使用本机ip也可以访问
     }
+}
