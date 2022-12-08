@@ -1,15 +1,17 @@
 <template>
- <div>
-     <router-view/>
- </div>
+  <div>
+    <router-view />
+  </div>
 </template>
 <script>
 export default {
-    name:'App',
-    data(){
-        return {
-            txt:'这是App.vue'
-        }
-    }
-}
+  name: "App",
+  data() {
+    return {
+      txt: "这是App.vue",
+    };
+  },
+};
 </script>
+<style lang="scss">
+</style>
