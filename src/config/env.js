@@ -7,7 +7,7 @@
  * 
  */
 
-let baseUrl = ''; 
+let baseUrl = 'http://localhost:8000'; 
 let routerMode = 'hash';
 let imgBaseUrl = '';
 

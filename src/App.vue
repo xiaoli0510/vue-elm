@@ -1,10 +1,16 @@
-<script setup>
-import HelloWorld from "./components/HelloWorld.vue";
+<script>
+	import svgIcon from './components/common/svg.vue';
+  export default{
+    components:{
+      svgIcon
+    }
+  }
 </script>
 
 <template>
   <div>
     <router-view></router-view>
+    <svgIcon></svgIcon>
   </div>
 </template>
 
