@@ -11,7 +11,7 @@
           placeholder="输入学校、商务楼、地址"
           class="city_input input_style"
           required
-          v-model="inputVaule"
+          v-model="inputValue"
         />
       </div>
       <div>
@@ -19,7 +19,7 @@
           type="submit"
           name="submit"
           class="city_submit input_style"
-          @click="postpois"
+          @click="handleSearch(postpois)"
           value="提交"
         />
       </div>
@@ -50,84 +50,96 @@
 import headTop from "@/components/header/Head.vue";
 import { currentcity, searchplace } from "@/service/getData";
 import { getStore, setStore, removeStore } from "@/config/mUtils";
+import { reactive, toRefs, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useSearchInput } from "./searchInput.js";
 
 export default {
-  data() {
-    return {
-      inputVaule: "", // 搜索地址
+  setup() {
+    let state = reactive({
       cityid: "", // 当前城市id
       cityname: "", // 当前城市名字
       placelist: [], // 搜索城市列表
       placeHistory: [], // 历史搜索记录
       historytitle: true, // 默认显示搜索历史头部，点击搜索后隐藏
       placeNone: false, // 搜索无结果，显示提示信息
-    };
-  },
-
-  mounted() {
-    this.cityid = this.$route.params.cityid;
-    //获取当前城市名字
-    currentcity(this.cityid).then((res) => {
-      this.cityname = res.name;
     });
 
-    this.initData();
-  },
+    let route = useRoute();
+    let router = useRouter();
 
-  components: {
-    headTop,
-  },
+    let { inputValue, handleSearch } = useSearchInput();
 
-  computed: {},
-
-  methods: {
-    initData() {
+    function initData() {
       //获取搜索历史记录
       if (getStore("placeHistory")) {
-        this.placelist = JSON.parse(getStore("placeHistory"));
+        state.placelist = JSON.parse(getStore("placeHistory"));
       } else {
-        this.placelist = [];
+        state.placelist = [];
       }
-    },
-    //发送搜索信息inputVaule
-    postpois() {
+    }
+
+    //发送搜索信息inputValue
+    function postpois() {
       //输入值不为空时才发送信息
-      if (this.inputVaule) {
-        searchplace(this.cityid, this.inputVaule).then((res) => {
-          this.historytitle = false;
-          this.placelist = res;
-          this.placeNone = res.length ? false : true;
+      if (inputValue) {
+        searchplace(state.cityid, inputValue).then((res) => {
+          historytitle = false;
+          state.placelist = res;
+          state.placeNone = res.length ? false : true;
         });
       }
-    },
+    }
+
     /**
      * 点击搜索结果进入下一页面时，判断之前是有搜索过，如果没有则新增，如果有则不做处理
      *
      */
-    nextpage(index, geohash) {
+    function nextpage(index, geohash) {
       let history = getStore("placeHistory");
-      let choosePlace = this.placelist[index];
+      let choosePlace = placelist[index];
       if (history) {
         let checkrepeat = false;
-        this.placeHistory = JSON.parse(history);
-        this.placeHistory.forEach((item) => {
+        state.placeHistory = JSON.parse(history);
+        state.placeHistory.forEach((item) => {
           if (item.geohash == geohash) {
             checkrepeat = true;
           }
         });
         if (!checkrepeat) {
-          this.placeHistory.push(choosePlace);
+          state.placeHistory.push(choosePlace);
         }
       } else {
-        this.placeHistory.push(choosePlace);
+        state.placeHistory.push(choosePlace);
       }
-      setStore('placeHistory',this.placeHistory);
-      this.$router.push({path:'/msite',query:{geohash}})
-    },
-    clearAll() {
+      setStore("placeHistory", placeHistory);
+      router.push({ path: "/msite", query: { geohash } });
+    }
+
+    function clearAll() {
       removeStore("placeHistory");
-      this.initData();
-    },
+      initData();
+    }
+
+    onMounted(() => {
+      state.cityid = route.params.cityid;
+      //获取当前城市名字
+      currentcity(state.cityid).then((res) => {
+        state.cityname = res.name;
+      });
+
+      initData();
+    });
+
+    return {
+      inputValue,
+      handleSearch,
+      ...toRefs(state),
+    };
+  },
+
+  components: {
+    headTop,
   },
 };
 </script>
