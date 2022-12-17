@@ -19,7 +19,7 @@
           type="submit"
           name="submit"
           class="city_submit input_style"
-          @click="handleSearch(postpois)"
+          @click="handleSearch(inputValue,postpois)"
           value="提交"
         />
       </div>
@@ -82,9 +82,9 @@ export default {
     //发送搜索信息inputValue
     function postpois() {
       //输入值不为空时才发送信息
-      if (inputValue) {
-        searchplace(state.cityid, inputValue).then((res) => {
-          historytitle = false;
+      if (inputValue.value) {
+        searchplace(state.cityid, inputValue.value).then((res) => {
+          state.historytitle = false;
           state.placelist = res;
           state.placeNone = res.length ? false : true;
         });
@@ -97,7 +97,7 @@ export default {
      */
     function nextpage(index, geohash) {
       let history = getStore("placeHistory");
-      let choosePlace = placelist[index];
+      let choosePlace = state.placelist[index];
       if (history) {
         let checkrepeat = false;
         state.placeHistory = JSON.parse(history);
@@ -112,7 +112,7 @@ export default {
       } else {
         state.placeHistory.push(choosePlace);
       }
-      setStore("placeHistory", placeHistory);
+      setStore("placeHistory", state.placeHistory);
       router.push({ path: "/msite", query: { geohash } });
     }
 
@@ -134,6 +134,9 @@ export default {
     return {
       inputValue,
       handleSearch,
+      postpois,
+      nextpage,
+      clearAll,
       ...toRefs(state),
     };
   },
