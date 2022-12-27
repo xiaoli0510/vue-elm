@@ -1,6 +1,8 @@
-<script>
-import headTop from "../../components/header/Head.vue";
+<script setup>
+import headTop from "../../components/header/head.vue";
 import alertTip from "../../components/common/alertTip.vue";
+import { reactive, toRefs, onMounted, computed } from "vue";
+
 import {
   getcaptchas,
   accountLogin,
@@ -8,143 +10,133 @@ import {
   mobileCode,
 } from "../../service/getData";
 
-export default {
-  data() {
-    return {
-      loginWay: false, //登录方式，默认短信登录
-      showPassword: false, // 是否显示密码
-      phoneNumber: null, //电话号码
-      mobileCode: null, //短信验证码
-      validate_token: null, //获取短信时返回的验证值，登录时需要
-      computedTime: 0, //倒数记时
-      userInfo: null, //获取到的用户信息
-      userAccount: null, //用户名
-      passWord: null, //密码
-      captchaCodeImg: null, //验证码地址
-      codeNumber: null, //验证码
-      showAlert: false, //显示提示组件
-      alertText: null, //提示的内容
-    };
-  },
-  components: {
-    headTop,
-    alertTip,
-  },
-  created() {
-    this.getCaptchaCode();
-  },
-  computed: {
-    //判断手机格式
-    rightPhoneNumber: function () {
-      return /^1\d{10}$/gi.test(this.phoneNumber);
-    },
-  },
-  methods: {
-    //改变是否显示密码
-    changePassWordType() {
-      this.showPassword = !this.showPassword;
-    },
-    //改变登录方式
-    changeLoginWay() {
-      this.loginWay = !this.loginWay;
-    },
-    //获取验证码，线上环境使用固定的图片，生产环境使用真实的验证码
-    async getCaptchaCode() {
-      let res = await getcaptchas();
-      this.captchaCodeImg = res.code;
-    },
-    //获取短信验证码
-    async getVerifyCode() {
-      if (this.rightPhoneNumber) {
-        this.computedTime = 30;
-        let timer = setInterval(() => {
-          this.computedTime--;
-          if (this.computedTime == 0) {
-            clearInterval(timer);
-          }
-        }, 1000);
+let state = reactive({
+  loginWay: false, //登录方式，默认短信登录
+  showPassword: false, // 是否显示密码
+  phoneNumber: null, //电话号码
+  mobileCode: null, //短信验证码
+  validate_token: null, //获取短信时返回的验证值，登录时需要
+  computedTime: 0, //倒数记时
+  userInfo: null, //获取到的用户信息
+  userAccount: null, //用户名
+  passWord: null, //密码
+  captchaCodeImg: null, //验证码地址
+  codeNumber: null, //验证码
+  showAlert: false, //显示提示组件
+  alertText: null, //提示的内容
+});
 
-        //判断用户是否存在
-        let exsist = await checkExsis(this.phoneNumber, "mobile");
-        if (exsist.message) {
-          this.showAlert = true;
-          this.alertText = exsist.message;
-          return;
-        } else if (!exsist.is_exists) {
-          this.showAlert = true;
-          this.alertText = "您输入的手机号尚未绑定";
-          return;
-        }
+onMounted(() => {
+  getCaptchaCode();
+});
 
-        //发送短信验证码
-        let res = await mobileCode(this.phoneNumber);
-        if (res.message) {
-          this.showAlert = true;
-          this.alertText = res.message;
-          return;
-        }
-        this.validate_token = res.validate_token;
+const rightPhoneNumber = computed(() => {
+  return /^1\d{10}$/gi.test(state.phoneNumber);
+});
+
+//改变是否显示密码
+function changePassWordType() {
+  state.showPassword = !state.showPassword;
+}
+//改变登录方式
+function changeLoginWay() {
+  state.loginWay = !state.loginWay;
+}
+//获取验证码，线上环境使用固定的图片，生产环境使用真实的验证码
+async function getCaptchaCode() {
+  let res = await getcaptchas();
+  state.captchaCodeImg = res.code;
+}
+//获取短信验证码
+async function getVerifyCode() {
+  if (state.rightPhoneNumber) {
+    state.computedTime = 30;
+    let timer = setInterval(() => {
+      state.computedTime--;
+      if (state.computedTime == 0) {
+        clearInterval(timer);
       }
-    },
-    //发送登录信息
-    async mobileLogin() {
-      if (this.loginWay) {
-        //短信登录
-        if (!this.rightPhoneNumber) {
-          this.showAlert = true;
-          this.alertText = "手机号码不正确";
-        } else if (!/^\d{6}$/gi.test(this.mobileCode)) {
-          this.showAlert = true;
-          this.alertText = "短信验证码不正确";
-        }
-        //手机号登录
-        //this.userInfo = await sendLogin(this.mobileCode,this.phoneNumber,this.validate_token);
-      } else {
-        //密码登录
-        if (!this.userAccount) {
-          this.showAlert = true;
-          this.alertText = "请输入手机号/邮箱/用户名";
-          return;
-        } else if (!this.passWord) {
-          this.showAlert = true;
-          this.alertText = "请输入密码";
-          return;
-        } else if (!this.codeNumber) {
-          this.showAlert = true;
-          this.alertText = "请输入验证码";
-          return;
-        }
-        //用户名登录
-        this.userInfo = await accountLogin(
-          this.userAccount,
-          this.passWord,
-          this.codeNumber
-        );
-      }
-    },
-    closeTip() {
-      this.showAlert = false;
-    },
-  },
-};
+    }, 1000);
+
+    //判断用户是否存在
+    let exsist = await checkExsis(state.phoneNumber, "mobile");
+    if (exsist.message) {
+      state.showAlert = true;
+      state.alertText = exsist.message;
+      return;
+    } else if (!exsist.is_exists) {
+      state.showAlert = true;
+      state.alertText = "您输入的手机号尚未绑定";
+      return;
+    }
+
+    //发送短信验证码
+    let res = await mobileCode(state.phoneNumber);
+    if (res.message) {
+      state.showAlert = true;
+      state.alertText = res.message;
+      return;
+    }
+    state.validate_token = res.validate_token;
+  }
+}
+//发送登录信息
+async function mobileLogin() {
+  if (state.loginWay) {
+    //短信登录
+    if (!state.rightPhoneNumber) {
+      state.showAlert = true;
+      state.alertText = "手机号码不正确";
+    } else if (!/^\d{6}$/gi.test(state.mobileCode)) {
+      state.showAlert = true;
+      state.alertText = "短信验证码不正确";
+    }
+    //手机号登录
+    //state.userInfo = await sendLogin(state.mobileCode,state.phoneNumber,state.validate_token);
+  } else {
+    //密码登录
+    if (!state.userAccount) {
+      state.showAlert = true;
+      state.alertText = "请输入手机号/邮箱/用户名";
+      return;
+    } else if (!state.passWord) {
+      state.showAlert = true;
+      state.alertText = "请输入密码";
+      return;
+    } else if (!state.codeNumber) {
+      state.showAlert = true;
+      state.alertText = "请输入验证码";
+      return;
+    }
+    //用户名登录
+    state.userInfo = await accountLogin(
+      state.userAccount,
+      state.passWord,
+      state.codeNumber
+    );
+  }
+}
+function closeTip() {
+  state.showAlert = false;
+}
 </script>
 <template>
   <div class="loginContainer">
     <headTop
-      :head-title="loginWay ? '登录' : '密码登录'"
+      :head-title="state.loginWay ? '登录' : '密码登录'"
       :goBack="true"
       :signinUp="false"
     >
       <!-- <div slot="changeLogin" class="change_login" @click="changeLoginWay">{{loginWay? "密码登录":"短信登录"}}</div> -->
     </headTop>
-    <form class="loginForm" v-if="loginWay">
+    <form class="loginForm" v-if="state.loginWay">
       <section class="input_container phone_number">
         <input
           type="text"
           placeholder="账号密码随便输入"
           name="phone"
           maxlength="11"
-          v-model="phoneNumber"
+          v-model="state.phoneNumber"
         />
         <button
           @click.prevent="getVerifyCode"
@@ -154,7 +146,7 @@ export default {
           获取验证码
         </button>
         <button @click.prevent v-show="computedTime">
-          已发送({{ computedTime }}s)
+          已发送({{ state.computedTime }}s)
         </button>
       </section>
       <section class="input_container">
@@ -169,20 +161,20 @@ export default {
     </form>
     <form class="loginForm" v-else>
       <section class="input_container">
-        <input type="text" placeholder="账号" v-model.lazy="userAccount" />
+        <input type="text" placeholder="账号" v-model.lazy="state.userAccount" />
       </section>
       <section class="input_container">
         <input
-          v-if="!showPassword"
+          v-if="!state.showPassword"
           type="password"
           placeholder="密码"
-          v-model="passWord"
+          v-model="state.passWord"
         />
-        <input v-else type="text" placeholder="密码" v-model="passWord" />
-        <div class="button_switch" :class="{ change_to_text: showPassword }">
+        <input v-else type="text" placeholder="密码" v-model="state.passWord" />
+        <div class="button_switch" :class="{ change_to_text: state.showPassword }">
           <div
             class="circle_button"
-            :class="{ trans_to_right: showPassword }"
+            :class="{ trans_to_right: state.showPassword }"
             @click="changePassWordType"
           ></div>
           <span>abc</span>
@@ -194,10 +186,10 @@ export default {
           type="text"
           placeholder="验证码"
           maxlength="4"
-          v-model="codeNumber"
+          v-model="state.codeNumber"
         />
         <div class="img_change_img">
-          <img v-show="captchaCodeImg" :src="captchaCodeImg" />
+          <img v-show="state.captchaCodeImg" :src="state.captchaCodeImg" />
           <div class="change_img" @click="getCaptchaCode">
             <p>看不清</p>
             <p>换一张</p>
@@ -208,14 +200,14 @@ export default {
     <p class="login_tips">温馨提示：未注册过的账号，登录时将自动注册</p>
     <p class="login_tips">注册过的用户可凭账号密码登录</p>
     <div class="login_container" @click="mobileLogin">登录</div>
-    <router-link to="/forget" class="to_forget" v-if="!loginWay"
+    <router-link to="/forget" class="to_forget" v-if="!state.loginWay"
       >重置密码？</router-link
     >
     <alertTip
-      v-if="showAlert"
-      :showHide="showAlert"
-      @closeTip="closeTip"
-      :alertText="alertText"
+      v-if="state.showAlert"
+      :showHide="state.showAlert"
+      @closeTip="state.closeTip"
+      :alertText="state.alertText"
     ></alertTip>
   </div>
 </template>

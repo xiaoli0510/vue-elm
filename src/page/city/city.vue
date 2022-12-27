@@ -1,6 +1,6 @@
 <template>
   <div class="city_container">
-    <head-top :head-title="cityname" :go-back="true" :signin-Up="false">
+    <head-top :head-title="state.cityname" :go-back="true" :signin-Up="false">
       <router-link to="/home" class="change_city">切换城市</router-link>
     </head-top>
     <form class="city_form" v-on:submit.prevent>
@@ -24,10 +24,10 @@
         />
       </div>
     </form>
-    <header v-if="historytitle" class="pois_search_history">搜索历史</header>
+    <header v-if="state.historytitle" class="pois_search_history">搜索历史</header>
     <ul class="getpois_ul">
       <li
-        v-for="(item, index) in placelist"
+        v-for="(item, index) in state.placelist"
         @click="nextpage(index, item.geohash)"
         :key="index"
       >
@@ -36,17 +36,17 @@
       </li>
     </ul>
     <footer
-      v-if="historytitle && placelist.length"
+      v-if="state.historytitle && state.placelist.length"
       class="clear_all_history"
       @click="clearAll"
     >
       清空所有
     </footer>
-    <div class="search_none_place" v-if="placeNone">很抱歉！无搜索结果</div>
+    <div class="search_none_place" v-if="state.placeNone">很抱歉！无搜索结果</div>
   </div>
 </template>
 
-<script>
+<script  setup>
 import headTop from "@/components/header/Head.vue";
 import { currentcity, searchplace } from "@/service/getData";
 import { getStore, setStore, removeStore } from "@/config/mUtils";
@@ -54,8 +54,6 @@ import { reactive, toRefs, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useSearchInput } from "./searchInput.js";
 
-export default {
-  setup() {
     let state = reactive({
       cityid: "", // 当前城市id
       cityname: "", // 当前城市名字
@@ -131,20 +129,7 @@ export default {
       initData();
     });
 
-    return {
-      inputValue,
-      handleSearch,
-      postpois,
-      nextpage,
-      clearAll,
-      ...toRefs(state),
-    };
-  },
 
-  components: {
-    headTop,
-  },
-};
 </script>
 
 <style lang="scss" scoped>

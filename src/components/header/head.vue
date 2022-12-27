@@ -1,14 +1,5 @@
-<script>
-export default {
-  setup() {},
-  props: {
-    signinUp: { type: Boolean, default: true },
-    headTitle: { type: String, default: "" },
-    goBack: { type: Boolean, default:true },
-    userInfo: { type: String, default: "" },
-  },
-  mounted() {},
-};
+<script setup>
+const props  = defineProps(['signinUp','headTitle','goBack','userInfo'])
 </script>
 <template>
   <header id="head_top">

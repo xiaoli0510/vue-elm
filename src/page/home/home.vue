@@ -1,8 +1,8 @@
 <template>
   <div>
-    <headTop :goBack="false" :signinUp="false">
-      <span class="head_logo">
-        <slot name="logo" @click="reload">ele.me</slot>
+    <headTop :goBack="false" :signinUp="true">
+      <span class="head_logo" @click="reload">
+        <slot name="logo">ele.me</slot>
       </span>
     </headTop>
     <nav class="city_nav">
@@ -10,8 +10,8 @@
         <span>当前定位城市：</span>
         <span>定位不准时，请在城市列表中选择</span>
       </div>
-      <router-link :to="'/city/' + guessCityid" class="guess_city">
-        <span>{{ guessCity }}</span>
+      <router-link :to="'/city/' + state.guessCityid" class="guess_city">
+        <span>{{ state.guessCity }}</span>
         <svg class="arrow_right">
           <use
             xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -25,7 +25,7 @@
       <ul class="citylistul clear">
         <router-link
           v-slot="navigate"
-          v-for="item in hotcity"
+          v-for="item in state.hotcity"
           :to="'/city/' + item.id"
           :key="item.id"
         >
@@ -65,63 +65,50 @@
   </div>
 </template>
 
-<script>
-import headTop from "../../components/header/Head.vue";
+<script setup>
+import headTop from "../../components/header/head.vue";
 import { cityGuess, hotcity, groupcity } from "../../service/getData";
+import { reactive, toRefs, onMounted, computed } from "vue";
 
-export default {
-  data() {
-    return {
-      guessCity: "", //当前城市
-      guessCityid: "", //当前城市id
-      hotcity: [], //热门城市列表
-      groupcity: {}, //所有城市列表
-    };
-  },
+let state = reactive({
+  guessCity: "", //当前城市
+  guessCityid: "", //当前城市id
+  hotcity: [], //热门城市列表
+  groupcity: {}, //所有城市列表
+});
 
-  mounted() {
-    // 获取当前城市
-    cityGuess().then((res) => {
-      this.guessCity = res.name;
-      this.guessCityid = res.id;
-    });
+onMounted(() => {
+  // 获取当前城市
+  cityGuess().then((res) => {
+    state.guessCity = res.name;
+    state.guessCityid = res.id;
+  });
 
-    //获取热门城市
-    hotcity().then((res) => {
-      this.hotcity = res;
-    });
+  //获取热门城市
+  hotcity().then((res) => {
+    state.hotcity = res;
+  });
 
-    //获取所有城市
-    groupcity().then((res) => {
-      this.groupcity = res;
-    });
-  },
+  //获取所有城市
+  groupcity().then((res) => {
+    state.groupcity = res;
+  });
+});
 
-  components: {
-    headTop,
-  },
+const sortgroupcity = computed(() => {
+  let sortobj = {};
+  for (let i = 65; i <= 90; i++) {
+    if (state.groupcity[String.fromCharCode(i)]) {
+      sortobj[String.fromCharCode(i)] = state.groupcity[String.fromCharCode(i)];
+    }
+  }
+  return sortobj;
+});
 
-  computed: {
-    //将获取的数据按照A-Z字母开头排序
-    sortgroupcity() {
-      let sortobj = {};
-      for (let i = 65; i <= 90; i++) {
-        if (this.groupcity[String.fromCharCode(i)]) {
-          sortobj[String.fromCharCode(i)] =
-            this.groupcity[String.fromCharCode(i)];
-        }
-      }
-      return sortobj;
-    },
-  },
-
-  methods: {
-    //点击图标刷新页面
-    reload() {
-      window.location.reload();
-    },
-  },
-};
+function reload() {
+  console.log(123)
+  window.location.reload();
+}
 </script>
 
 <style lang="scss" scoped>
@@ -204,6 +191,9 @@ export default {
   .groupcity_name_container {
     li {
       color: #666;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }
