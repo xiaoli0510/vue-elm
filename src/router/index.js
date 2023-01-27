@@ -7,6 +7,8 @@ import Login from '../page/login/login.vue'
 import Forget from '../page/forget/forget.vue'
 import City from '../page/city/city.vue'
 import Msite from '../page/msite/msite.vue'
+import Search from '../page/search/search.vue'
+
 
 
 
@@ -35,6 +37,14 @@ const router = createRouter({
     },{
         path: '/msite',
         component: Msite
+    },{
+        path: '/search/:geohash',
+        component: Search,
+        children:[
+            {
+                path:'',component:Search,alias:['/:geohash','']
+            }
+        ]
     }],
 })
 

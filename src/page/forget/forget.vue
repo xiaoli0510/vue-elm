@@ -1,94 +1,83 @@
-<script>
+<script setup>
 import headTop from "@/components/header/Head.vue";
 import alertTip from "@/components/common/alertTip.vue";
-import {
-  getcaptchas,
-  changePassword,
-} from "@/service/getData";
+import { onMounted, reactive } from "vue";
+import { getcaptchas, changePassword } from "@/service/getData";
 
-export default {
-  setup() {},
-  data() {
-    return {
-      phoneNumber: null, //电话号码
-      oldPassWord: null,
-      newPassWord: null, //新密码
-      rightPhoneNumber: false, //输入的手机号码是否符合要求
-      confirmPassWord: null, //确认密码
-      captchaCodeImg: null, //验证码地址
-      mobileCode: null, //短信验证码
-      computedTime: 0, //倒数记时
-      showAlert: false, //显示提示组件
-      alertText: null, //提示的内容
-      accountType: "mobile", //注册方式
-      captchaCodeImg: null,
-    };
-  },
-  components: {
-    headTop,
-    alertTip,
-  },
-  created() {
-    this.getCaptchaCode();
-  },
-  methods: {
-    //获取验证码，线上环境使用固定的图片，生产环境使用真实的验证码
-    async getCaptchaCode() {
-      let res = await getcaptchas();
-      this.captchaCodeImg = res.code;
-    },
-    //重置密码
-    async resetButton() {
-      if (!this.phoneNumber) {
-        this.showAlert = true;
-        this.alertText = "请输入正确的账号";
-        return;
-      } else if (!this.oldPassWord) {
-        this.showAlert = true;
-        this.alertText = "请输入旧密码";
-        return;
-      } else if (!this.newPassWord) {
-        this.showAlert = true;
-        this.alertText = "请输入新密码";
-        return;
-      } else if (!this.confirmPassWord) {
-        this.showAlert = true;
-        this.alertText = "请输确认密码";
-        return;
-      } else if (this.newPassWord !== this.confirmPassWord) {
-        this.showAlert = true;
-        this.alertText = "两次输入的密码不一致";
-        return;
-      } else if (!this.mobileCode) {
-        this.showAlert = true;
-        this.alertText = "请输验证码";
-        return;
-      }
+let state = reactive({
+  phoneNumber: null, //电话号码
+  oldPassWord: null,
+  newPassWord: null, //新密码
+  rightPhoneNumber: false, //输入的手机号码是否符合要求
+  confirmPassWord: null, //确认密码
+  captchaCodeImg: null, //验证码地址
+  mobileCode: null, //短信验证码
+  computedTime: 0, //倒数记时
+  showAlert: false, //显示提示组件
+  alertText: null, //提示的内容
+  accountType: "mobile" //注册方式
+});
 
-      //发送重置信息
-      let res = await changePassword(
-        this.phoneNumber,
-        this.oldPassWord,
-        this.newPassWord,
-        this.confirmPassWord,
-        this.mobileCode
-      );
-      if (res.message) {
-        this.showAlert = true;
-        this.alertText = res.message;
-        this.getCaptchaCode();
-        return;
-      } else {
-        this.showAlert = true;
-        this.alertText = "密码修改成功";
-      }
-    },
-    //关闭提示弹框
-    closeTip() {
-      this.showAlert = false;
-    },
-  },
-};
+onMounted(() => {
+  getCaptchaCode();
+});
+
+//获取验证码，线上环境使用固定的图片，生产环境使用真实的验证码
+async function getCaptchaCode() {
+  let res = await getcaptchas();
+  state.captchaCodeImg = res.code;
+}
+
+//重置密码
+async function resetButton() {
+  if (!state.phoneNumber) {
+    state.showAlert = true;
+    state.alertText = "请输入正确的账号";
+    return;
+  } else if (!state.oldPassWord) {
+    state.showAlert = true;
+    state.alertText = "请输入旧密码";
+    return;
+  } else if (!state.newPassWord) {
+    state.showAlert = true;
+    state.alertText = "请输入新密码";
+    return;
+  } else if (!state.confirmPassWord) {
+    state.showAlert = true;
+    state.alertText = "请输确认密码";
+    return;
+  } else if (state.newPassWord !== state.confirmPassWord) {
+    state.showAlert = true;
+    state.alertText = "两次输入的密码不一致";
+    return;
+  } else if (!state.mobileCode) {
+    state.showAlert = true;
+    state.alertText = "请输验证码";
+    return;
+  }
+
+  //发送重置信息
+  let res = await changePassword(
+    state.phoneNumber,
+    state.oldPassWord,
+    state.newPassWord,
+    state.confirmPassWord,
+    state.mobileCode
+  );
+  if (res.message) {
+    state.showAlert = true;
+    state.alertText = res.message;
+    state.getCaptchaCode();
+    return;
+  } else {
+    state.showAlert = true;
+    state.alertText = "密码修改成功";
+  }
+}
+//关闭提示弹框
+function closeTip() {
+  state.showAlert = false;
+}
 </script>
 <template>
   <div class="restContainer">
@@ -100,7 +89,7 @@ export default {
           placeholder="账号"
           name="phone"
           maxlength="11"
-          v-model="phoneNumber"
+          v-model="state.phoneNumber"
           @input="inputPhone"
         />
         <!-- <button @click.prevent="getVerifyCode" :class="{right_phone_number:rightPhoneNumber}" v-show="!computedTime">获取验证码</button>
@@ -111,7 +100,7 @@ export default {
           type="text"
           placeholder="旧密码"
           name="oldPassWord"
-          v-model="oldPassWord"
+          v-model="state.oldPassWord"
         />
       </section>
       <section class="input_container">
@@ -119,7 +108,7 @@ export default {
           type="text"
           placeholder="请输入新密码"
           name="newPassWord"
-          v-model="newPassWord"
+          v-model="state.newPassWord"
         />
       </section>
       <section class="input_container">
@@ -127,7 +116,7 @@ export default {
           type="text"
           placeholder="请确认密码"
           name="confirmPassWord"
-          v-model="confirmPassWord"
+          v-model="state.confirmPassWord"
         />
       </section>
       <section class="input_container captcha_code_container">
@@ -136,10 +125,10 @@ export default {
           placeholder="验证码"
           name="mobileCode"
           maxlength="6"
-          v-model="mobileCode"
+          v-model="state.mobileCode"
         />
         <div class="img_change_img">
-          <img v-show="captchaCodeImg" :src="captchaCodeImg" />
+          <img v-show="state.captchaCodeImg" :src="state.captchaCodeImg" />
           <div class="change_img" @click="getCaptchaCode">
             <p>看不清</p>
             <p>换一张</p>
@@ -149,10 +138,10 @@ export default {
     </form>
     <div class="login_container" @click="resetButton">确认修改</div>
     <alertTip
-      v-if="showAlert"
-      :showHide="showAlert"
+      v-if="state.showAlert"
+      :showHide="state.showAlert"
       @closeTip="closeTip"
-      :alertText="alertText"
+      :alertText="state.alertText"
     ></alertTip>
   </div>
 </template>
