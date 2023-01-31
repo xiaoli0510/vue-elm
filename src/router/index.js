@@ -16,6 +16,9 @@ import FoodDetail from '../page/home/home.vue'
 const router = createRouter({
     history: createWebHistory(),
     routes: [{
+        path: '',
+        component: Home
+    },{
         path: '/home',
         component: Home
     },{

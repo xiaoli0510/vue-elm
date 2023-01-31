@@ -9,7 +9,7 @@ import {
   ratingTags,
 } from "@/service/getData";
 import loading from "@/components/common/loading.vue";
-// import buyCart from "@/components/common/buyCart";
+import buyCart from "@/components/common/buyCart.vue";
 // import ratingStar from "@/components/common/ratingStar";
 import { loadMore, getImgPath } from "@/components/common/mixin";
 import { imgBaseUrl } from "@/config/env";
@@ -421,10 +421,10 @@ function afterEnter(el) {
   state.showMoveDot = state.showMoveDot.map((item) => false);
   el.children[0].style.opacity = 1;
   el.children[0].addEventListener("transitionend", () => {
-    state.listenInCart();
+    listenInCart();
   });
   el.children[0].addEventListener("webkitAnimationEnd", () => {
-    state.listenInCart();
+    listenInCart();
   });
 }
 
@@ -775,14 +775,14 @@ watch(
                         <span>{{ foods.specfoods[0].price }}</span>
                         <span v-if="foods.specifications.length">起</span>
                       </section>
-                      <!-- <buy-cart
-                      :shopId="shopId"
+                      <buy-cart
+                      :shopId="state.shopId"
                       :foods="foods"
                       @moveInCart="listenInCart"
                       @showChooseList="showChooseList"
                       @showReduceTip="showReduceTip"
                       @showMoveDot="showMoveDotFun"
-                    ></buy-cart> -->
+                    ></buy-cart>
                     </footer>
                   </section>
                 </li>
