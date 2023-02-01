@@ -84,8 +84,7 @@ onMounted(() => {
 //通告信息
 const promotionInfo = computed(() => {
   return (
-    state.shopDetailData.promotion_info ||
-    "欢迎光临，用餐高峰期请提前下单，谢谢。"
+    state.shopDetailData?state.shopDetailData.promotion_info:"欢迎光临，用餐高峰期请提前下单，谢谢。"
   );
 });
 
@@ -109,7 +108,7 @@ const minimumOrderAmount = computed(() => {
 
 //当前商店购物信息
 const shopCart = computed(() => {
-  return { ...stateStore._state.cartList[state.shopId] };
+  return { ...stateStore.state.cartList[state.shopId] };
 });
 
 //购物车中总共商品的数量
@@ -160,24 +159,24 @@ function getFoodListHeight() {
     listArr.forEach((item, index) => {
       state.shopListTop[index] = item.offsetTop;
     });
-    listenScroll(listContainer);
+    //listenScroll(listContainer);
   }
 }
 
 //当滑动食品列表时，监听其scrollTop值来设置对应的食品列表标题的样式
 function listenScroll(element) {
+  console.log(element)
   state.foodScroll = new BScroll(element, {
     probeType: 3,
     deceleration: 0.001,
     bounce: false,
-    swiperTime: 2000,
+    swipeTime: 2000,
     click: true,
   });
 
-  const wrapperMenu = new BScroll("#wrapper_menu", {
-    click: true,
-  });
-
+  // const wrapperMenu = new BScroll("#wrapper_menu", {
+  //   click: true,
+  // });
   const wrapMenuHeight = currentInstance.refs.wrapperMenu.clientHeight;
   state.foodScroll.on("scroll", (pos) => {
     if (currentInstance.refs.wrapperMenu) {
@@ -253,12 +252,15 @@ function initCategoryNum() {
   state.totalPrice = 0;
   state.cartFoodList = [];
   state.menuList.forEach((item, index) => {
-    if (shopCart && shopCart[item.foods[0].category_id]) {
+    if (shopCart.value && shopCart.value[item.foods[0].category_id]) {
       let num = 0;
-      Object.keys(shopCart[item.foods[0].category_id]).forEach((itemid) => {
-        Object.keys(shopCart[item.foods[0].category_id][itemid]).forEach(
-          (foodid) => {
-            let foodItem = shopCart[item.foods[0].category_id][itemid][foodid];
+      Object.keys(shopCart.value[item.foods[0].category_id]).forEach(
+        (itemid) => {
+          Object.keys(
+            shopCart.value[item.foods[0].category_id][itemid]
+          ).forEach((foodid) => {
+            let foodItem =
+              shopCart.value[item.foods[0].category_id][itemid][foodid];
             num += foodItem.num;
             if (item.type == 1) {
               state.totalPrice += foodItem.num * foodItem.price;
@@ -275,9 +277,9 @@ function initCategoryNum() {
                 cartFoodNum++;
               }
             }
-          }
-        );
-      });
+          });
+        }
+      );
       newArr[index] = num;
     } else {
       newArr[index] = 0;
@@ -393,14 +395,14 @@ function showReduceTip() {
   state.timer = setTimeout(() => {
     clearTimeout(state.timer);
     state.showDeleteTip = false;
-  },3000);
+  }, 3000);
 }
 
 //显示下落圆球
 function showMoveDotFun(showMoveDot, elLeft, elBottom) {
- state.showMoveDot=[...state.showMoveDot,...state.showMoveDot];
- state.elLeft = elLeft;
- state.elBottom = elBottom;
+  state.showMoveDot = [...showMoveDot, ...showMoveDot];
+  state.elLeft = elLeft;
+  state.elBottom = elBottom;
 }
 
 //动画
@@ -440,12 +442,12 @@ watch(
     getFoodListHeight();
     initCategoryNum();
   },
-  { flush: "post" }//dom更新后执行回调
+  { flush: "post" } //dom更新后执行回调
 );
 
 //shopCart当前商店变化时，需重新获取menulist的高度并从vuex里面获取当前商铺的购物车数据
 watch(
-  () => shopCart,
+  () => shopCart.value,
   (value) => {
     initCategoryNum();
   }
@@ -492,14 +494,14 @@ watch(
       >
         <div class="header_cover_img_con">
           <img
-            :src="imgBaseUrl + state.shopDetailData.image_path"
+            src="http://localhost:8000/img/164ad0b6a3917599.jpg"
             class="header_cover_img"
           />
         </div>
         <section class="description_header">
           <router-link to="/shop/shopDetail" class="description_top">
             <section class="description_left">
-              <img :src="imgBaseUrl + state.shopDetailData.image_path" />
+              <img src="http://localhost:8000/img/164ad0b6a3917599.jpg" />
             </section>
             <section class="description_right">
               <h4 class="description_title ellipsis">
@@ -511,7 +513,7 @@ watch(
                 }}分钟送达／配送费¥{{ state.shopDetailData.float_delivery_fee }}
               </p>
               <p class="description_promotion ellipsis">
-                公告：{{ state.promotionInfo }}
+                公告：{{ promotionInfo }}
               </p>
             </section>
             <svg
@@ -657,7 +659,7 @@ watch(
                   <span
                     class="category_num"
                     v-if="state.categoryNum[index] && item.type == 1"
-                    >{{ tate.categoryNum[index] }}</span
+                    >{{ state.categoryNum[index] }}</span
                   >
                 </li>
               </ul>
@@ -708,7 +710,9 @@ watch(
                       class="menu_detail_link"
                     >
                       <section class="menu_food_img">
-                        <img :src="imgBaseUrl + foods.image_path" />
+                        <img
+                          src="http://localhost:8000/img/164ad0b6a3917599.jpg"
+                        />
                       </section>
                       <section class="menu_food_description">
                         <h3 class="food_description_head">
@@ -776,13 +780,13 @@ watch(
                         <span v-if="foods.specifications.length">起</span>
                       </section>
                       <buy-cart
-                      :shopId="state.shopId"
-                      :foods="foods"
-                      @moveInCart="listenInCart"
-                      @showChooseList="showChooseList"
-                      @showReduceTip="showReduceTip"
-                      @showMoveDot="showMoveDotFun"
-                    ></buy-cart>
+                        :shopId="state.shopId"
+                        :foods="foods"
+                        @moveInCart="listenInCart"
+                        @showChooseList="showChooseList"
+                        @showReduceTip="showReduceTip"
+                        @showMoveDot="showMoveDotFun"
+                      ></buy-cart>
                     </footer>
                   </section>
                 </li>
@@ -799,8 +803,8 @@ watch(
                 }"
                 ref="cartContainer"
               >
-                <span v-if="state.totalNum" class="cart_list_length">
-                  {{ state.totalNum }}
+                <span v-if="totalNum" class="cart_list_length">
+                  {{ totalNum }}
                 </span>
                 <svg class="cart_icon">
                   <use
@@ -811,16 +815,14 @@ watch(
               </div>
               <div class="cart_num">
                 <div>¥ {{ state.totalPrice }}</div>
-                <div>配送费¥{{ state.deliveryFee }}</div>
+                <div>配送费¥{{ deliveryFee }}</div>
               </div>
             </section>
             <section
               class="gotopay"
-              :class="{ gotopay_acitvity: state.minimumOrderAmount <= 0 }"
+              :class="{ gotopay_acitvity: minimumOrderAmount <= 0 }"
             >
-              <span
-                class="gotopay_button_style"
-                v-if="state.minimumOrderAmount > 0"
+              <span class="gotopay_button_style" v-if="minimumOrderAmount > 0"
                 >还差¥{{ minimumOrderAmount }}起送</span
               >
               <router-link
@@ -920,6 +922,7 @@ watch(
           </transition>
         </section>
       </transition>
+      <!-- 评价 -->
       <transition name="fade-choose">
         <section
           class="rating_container"
@@ -1005,7 +1008,7 @@ watch(
                         :key="index"
                       >
                         <img
-                          :src="getImgPath(item.image_hash)"
+                          src="https://fuss10.elemecdn.com/d/c8/64033625905f0a15a2d181d53a425jpeg.jpeg"
                           v-if="item.image_hash"
                         />
                       </li>
@@ -1027,107 +1030,125 @@ watch(
         </section>
       </transition>
     </section>
-    <!-- <section>
-    <transition name="fade">
-      <div class="specs_cover" @click="showChooseList" v-if="showSpecs"></div>
-    </transition>
-    <transition name="fadeBounce">
-      <div class="specs_list" v-if="showSpecs">
-        <header class="specs_list_header">
-          <h4 class="ellipsis">{{ choosedFoods.name }}</h4>
-          <svg
-            width="16"
-            height="16"
-            xmlns="http://www.w3.org/2000/svg"
-            version="1.1"
-            class="specs_cancel"
-            @click="showChooseList"
-          >
-            <line
-              x1="0"
-              y1="0"
-              x2="16"
-              y2="16"
-              stroke="#666"
-              stroke-width="1.2"
-            />
-            <line
-              x1="0"
-              y1="16"
-              x2="16"
-              y2="0"
-              stroke="#666"
-              stroke-width="1.2"
-            />
-          </svg>
-        </header>
-        <section class="specs_details">
-          <h5 class="specs_details_title">
-            {{ choosedFoods.specifications[0].name }}
-          </h5>
-          <ul>
-            <li
-              v-for="(item, itemIndex) in choosedFoods.specifications[0].values"
-              :class="{ specs_activity: itemIndex == specsIndex }"
-              @click="chooseSpecs(itemIndex)"
+    <section>
+      <transition name="fade">
+        <div
+          class="specs_cover"
+          @click="showChooseList"
+          v-if="state.showSpecs"
+        ></div>
+      </transition>
+      <transition name="fadeBounce">
+        <div class="specs_list" v-if="state.showSpecs">
+          <header class="specs_list_header">
+            <h4 class="ellipsis">{{ choosedFoods.name }}</h4>
+            <svg
+              width="16"
+              height="16"
+              xmlns="http://www.w3.org/2000/svg"
+              version="1.1"
+              class="specs_cancel"
+              @click="showChooseList"
             >
-              {{ item }}
-            </li>
-          </ul>
-        </section>
-        <footer class="specs_footer">
-          <div class="specs_price">
-            <span>¥ </span>
-            <span>{{ choosedFoods.specfoods[specsIndex].price }}</span>
-          </div>
-          <div
-            class="specs_addto_cart"
-            @click="
-              addSpecs(
-                choosedFoods.category_id,
-                choosedFoods.item_id,
-                choosedFoods.specfoods[specsIndex].food_id,
-                choosedFoods.specfoods[specsIndex].name,
-                choosedFoods.specfoods[specsIndex].price,
-                choosedFoods.specifications[0].values[specsIndex],
-                choosedFoods.specfoods[specsIndex].packing_fee,
-                choosedFoods.specfoods[specsIndex].sku_id,
-                choosedFoods.specfoods[specsIndex].stock
-              )
-            "
-          >
-            加入购物车
-          </div>
-        </footer>
-      </div>
+              <line
+                x1="0"
+                y1="0"
+                x2="16"
+                y2="16"
+                stroke="#666"
+                stroke-width="1.2"
+              />
+              <line
+                x1="0"
+                y1="16"
+                x2="16"
+                y2="0"
+                stroke="#666"
+                stroke-width="1.2"
+              />
+            </svg>
+          </header>
+
+          <section class="specs_details">
+            <h5 class="specs_details_title">
+              {{ state.choosedFoods.specifications[0].name }}
+            </h5>
+            <ul>
+              <li
+                :key="itemIndex"
+                v-for="(item, itemIndex) in state.choosedFoods.specifications[0]
+                  .values"
+                :class="{ specs_activity: itemIndex == specsIndex }"
+                @click="chooseSpecs(itemIndex)"
+              >
+                {{ item }}
+              </li>
+            </ul>
+          </section>
+          <footer class="specs_footer">
+            <div class="specs_price">
+              <span>¥ </span>
+              <span>{{ state.choosedFoods.specfoods[specsIndex].price }}</span>
+            </div>
+            <div
+              class="specs_addto_cart"
+              @click="
+                addSpecs(
+                  state.choosedFoods.category_id,
+                  state.choosedFoods.item_id,
+                  state.choosedFoods.specfoods[specsIndex].food_id,
+                  state.choosedFoods.specfoods[specsIndex].name,
+                  state.choosedFoods.specfoods[specsIndex].price,
+                  state.choosedFoods.specifications[0].values[specsIndex],
+                  state.choosedFoods.specfoods[specsIndex].packing_fee,
+                  state.choosedFoods.specfoods[specsIndex].sku_id,
+                  state.choosedFoods.specfoods[specsIndex].stock
+                )
+              "
+            >
+              加入购物车
+            </div>
+          </footer>
+        </div>
+      </transition>
+    </section>
+    <transition name="fade">
+      <p class="show_delete_tip" v-if="state.showDeleteTip">
+        多规格商品只能去购物车删除哦
+      </p>
     </transition>
-  </section>
-  <transition name="fade">
-    <p class="show_delete_tip" v-if="showDeleteTip">
-      多规格商品只能去购物车删除哦
-    </p>
-  </transition>
-  <transition
-    appear
-    @after-appear="afterEnter"
-    @before-appear="beforeEnter"
-    v-for="(item, index) in showMoveDot"
-    :key=index
-  >
-    <span class="move_dot" v-if="item">
-      <svg class="move_liner">
-        <use
-          xmlns:xlink="http://www.w3.org/1999/xlink"
-          xlink:href="#cart-add"
-        ></use>
-      </svg>
-    </span>
-  </transition>
-  <loading v-show="showLoading || loadRatings"></loading>
-  <section class="animation_opactiy shop_back_svg_container" v-if="showLoading">
-    <img src="../../images/shop_back_svg.svg" />
-  </section>
-  <transition name="router-slid" mode="out-in">
+    <!-- 购物车的球 下落动画效果 -->
+    <transition
+      appear
+      @after-appear="afterEnter"
+      @before-appear="beforeEnter"
+      v-for="(item, index) in state.showMoveDot"
+      :key="index"
+    >
+      <span class="move_dot" v-if="item">
+        <svg class="move_liner">
+          <use
+            xmlns:xlink="http://www.w3.org/1999/xlink"
+            xlink:href="#cart-add"
+          ></use>
+        </svg>
+      </span>
+    </transition>
+    <loading v-show="state.showLoading || state.loadRatings"></loading>
+    <section
+      class="animation_opactiy shop_back_svg_container"
+      v-if="state.showLoading"
+    >
+      <img src="../../images/shop_back_svg.svg" />
+    </section>
+
+    <router-view v-slot="{ Component }">
+      <transition>
+        <component :is="Component" />
+      </transition>
+    </router-view>
+
+    <!-- <transition name="router-slid" mode="out-in">
     <router-view></router-view>
   </transition> -->
   </div>

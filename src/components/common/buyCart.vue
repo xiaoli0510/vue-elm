@@ -1,13 +1,12 @@
 <script setup>
-import { reactive, computed } from "vue";
+import { reactive, computed,defineProps } from "vue";
 import { useStore, mapState } from "vuex";
 
 let state = reactive({
   showMoveDot: [], //控制小圆点的显示隐藏
 });
 
-let stateSotre = useStore();
-// let cartList = mapState(["cartList"]);
+const stateSotre = useStore();
 
 const props = defineProps({
   shopId: String,
@@ -53,10 +52,10 @@ function addToCart(
 }
 
 //移出购物车
-function removeOutCart() {
-  if (foodNum > 0) {
+function removeOutCart(category_id, item_id, food_id, name, price, specs, packing_fee, sku_id, stock) {
+  if (foodNum.value > 0) {
     stateSotre.commit("REDUCE_CART", {
-      shopid: shopId,
+      shopid: props.shopId,
       category_id,
       item_id,
       food_id,
@@ -83,9 +82,9 @@ function showReduceTip() {
 const foodNum = computed(() => {
   let category_id = props.foods.category_id;
   let item_id = props.foods.item_id;
-  if (shopCart && shopCart[category_id] && shopCart[category_id][item_id]) {
+  if (shopCart && (shopCart.value)[category_id] && (shopCart.value)[category_id][item_id]) {
     let num = 0;
-    Object.values(shopCart[category_id][item_id]).forEach((item, index) => {
+    Object.values((shopCart.value)[category_id][item_id]).forEach((item, index) => {
       num += item.num;
     });
     return num;
@@ -95,11 +94,11 @@ const foodNum = computed(() => {
 });
 
 const shopCart = computed(() => {
-  return Object.assign({}, cartList[shopId]);
+  return Object.assign({}, cartList.value[props.shopId]);
 });
 
 const cartList = computed(()=>{
-    return stateSotre.cartList;
+    return stateSotre.state.cartList;
 })
 </script>
 <template>
