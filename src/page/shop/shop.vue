@@ -10,7 +10,7 @@ import {
 } from "@/service/getData";
 import loading from "@/components/common/loading.vue";
 import buyCart from "@/components/common/buyCart.vue";
-// import ratingStar from "@/components/common/ratingStar";
+import ratingStar from "@/components/common/ratingStar.vue";
 import { loadMore, getImgPath } from "@/components/common/mixin";
 import { imgBaseUrl } from "@/config/env";
 import BScroll from "better-scroll";
@@ -83,9 +83,9 @@ onMounted(() => {
 
 //通告信息
 const promotionInfo = computed(() => {
-  return (
-    state.shopDetailData?state.shopDetailData.promotion_info:"欢迎光临，用餐高峰期请提前下单，谢谢。"
-  );
+  return state.shopDetailData
+    ? state.shopDetailData.promotion_info
+    : "欢迎光临，用餐高峰期请提前下单，谢谢。";
 });
 
 //配送费
@@ -137,7 +137,7 @@ async function initData() {
   //获取商铺食品列表
   state.menuList = await foodMenu(state.shopId);
   //评论列表
-  state.ratingList = await getRatingList(state.shooId, state.ratingOffset);
+  state.ratingList = await getRatingList(state.shopId, state.ratingOffset);
   //商铺评论详情
   state.ratingScoresData = await ratingScores(state.shopId);
   //评论Tag列表
@@ -159,13 +159,12 @@ function getFoodListHeight() {
     listArr.forEach((item, index) => {
       state.shopListTop[index] = item.offsetTop;
     });
-    //listenScroll(listContainer);
+    listenScroll(listContainer);
   }
 }
 
 //当滑动食品列表时，监听其scrollTop值来设置对应的食品列表标题的样式
 function listenScroll(element) {
-  console.log(element)
   state.foodScroll = new BScroll(element, {
     probeType: 3,
     deceleration: 0.001,
@@ -174,12 +173,12 @@ function listenScroll(element) {
     click: true,
   });
 
-  // const wrapperMenu = new BScroll("#wrapper_menu", {
-  //   click: true,
-  // });
+  const wrapperMenu = new BScroll("#wrapper_menu", {
+    click: true,
+  });
   const wrapMenuHeight = currentInstance.refs.wrapperMenu.clientHeight;
   state.foodScroll.on("scroll", (pos) => {
-    if (currentInstance.refs.wrapperMenu) {
+    if (!currentInstance.refs.wrapperMenu) {
       return;
     }
     state.shopListTop.forEach((item, index) => {
@@ -352,7 +351,7 @@ function showChooseList(foods) {
   if (foods) {
     state.choosedFoods = foods;
   }
-  state.showSpecs = !this.showSpecs;
+  state.showSpecs = !state.showSpecs;
   state.specsIndex = 0;
 }
 
@@ -374,7 +373,7 @@ function addSpecs(
   stock
 ) {
   stateStore.commit("ADD_CART", {
-    shopid: this.shopId,
+    shopid: state.shopId,
     category_id,
     item_id,
     food_id,
@@ -463,11 +462,30 @@ watch(
   }
 );
 
+//商品、评价切换状态
 watch(
   () => state.changeShowType,
   (value) => {
     if (value === "rating") {
+      state.ratingScroll = new BScroll("#ratingContainer", {
+        probeType: 3,
+        deceleration: 0.003,
+        bounce: false,
+        swipeTime: 2000,
+        click: true,
+      });
+      state.ratingScroll.on("scroll", (pos) => {
+        if (
+          Math.abs(Math.round(pos.y)) >=
+          Math.abs(Math.round(state.ratingScroll.maxScrollY))
+        ) {
+          loaderMoreRating();
+          state.ratingScroll.refresh();
+        }
+      });
     }
+  },{
+    flush:'post'
   }
 );
 </script>
@@ -566,7 +584,7 @@ watch(
         <section class="activities_details" v-if="state.showActivities">
           <h2 class="activities_shoptitle">{{ state.shopDetailData.name }}</h2>
           <h3 class="activities_ratingstar">
-            <!-- <rating-star :rating="shopDetailData.rating"></rating-star> -->
+            <rating-star :rating="state.shopDetailData.rating"></rating-star>
           </h3>
           <section class="activities_list">
             <header class="activities_title_style">
@@ -945,18 +963,18 @@ watch(
                 <section class="rating_header_right">
                   <p>
                     <span>服务态度</span>
-                    <!-- <rating-star
+                    <rating-star
                       :rating="state.ratingScoresData.service_score"
-                    ></rating-star> -->
+                    ></rating-star>
                     <span class="rating_num">{{
                       state.ratingScoresData.service_score.toFixed(1)
                     }}</span>
                   </p>
                   <p>
                     <span>菜品评价</span>
-                    <!-- <rating-star
+                    <rating-star
                       :rating="state.ratingScoresData.food_score"
-                    ></rating-star> -->
+                    ></rating-star>
                     <span class="rating_num">{{
                       state.ratingScoresData.food_score.toFixed(1)
                     }}</span>
@@ -994,7 +1012,7 @@ watch(
                       <section class="username_star">
                         <p class="username">{{ item.username }}</p>
                         <p class="star_desc">
-                          <!-- <rating-star :rating="item.rating_star"></rating-star> -->
+                          <rating-star :rating="item.rating_star"></rating-star>
                           <span class="time_spent_desc">{{
                             item.time_spent_desc
                           }}</span>
@@ -1041,7 +1059,7 @@ watch(
       <transition name="fadeBounce">
         <div class="specs_list" v-if="state.showSpecs">
           <header class="specs_list_header">
-            <h4 class="ellipsis">{{ choosedFoods.name }}</h4>
+            <h4 class="ellipsis">{{ state.choosedFoods.name }}</h4>
             <svg
               width="16"
               height="16"
@@ -1078,7 +1096,7 @@ watch(
                 :key="itemIndex"
                 v-for="(item, itemIndex) in state.choosedFoods.specifications[0]
                   .values"
-                :class="{ specs_activity: itemIndex == specsIndex }"
+                :class="{ specs_activity: itemIndex == state.specsIndex }"
                 @click="chooseSpecs(itemIndex)"
               >
                 {{ item }}
@@ -1088,7 +1106,9 @@ watch(
           <footer class="specs_footer">
             <div class="specs_price">
               <span>¥ </span>
-              <span>{{ state.choosedFoods.specfoods[specsIndex].price }}</span>
+              <span>{{
+                state.choosedFoods.specfoods[state.specsIndex].price
+              }}</span>
             </div>
             <div
               class="specs_addto_cart"
@@ -1096,13 +1116,13 @@ watch(
                 addSpecs(
                   state.choosedFoods.category_id,
                   state.choosedFoods.item_id,
-                  state.choosedFoods.specfoods[specsIndex].food_id,
-                  state.choosedFoods.specfoods[specsIndex].name,
-                  state.choosedFoods.specfoods[specsIndex].price,
+                  state.choosedFoods.specfoods[state.specsIndex].food_id,
+                  state.choosedFoods.specfoods[state.specsIndex].name,
+                  state.choosedFoods.specfoods[state.specsIndex].price,
                   state.choosedFoods.specifications[0].values[specsIndex],
-                  state.choosedFoods.specfoods[specsIndex].packing_fee,
-                  state.choosedFoods.specfoods[specsIndex].sku_id,
-                  state.choosedFoods.specfoods[specsIndex].stock
+                  state.choosedFoods.specfoods[state.specsIndex].packing_fee,
+                  state.choosedFoods.specfoods[state.specsIndex].sku_id,
+                  state.choosedFoods.specfoods[state.specsIndex].stock
                 )
               "
             >
