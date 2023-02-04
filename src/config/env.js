@@ -10,6 +10,11 @@
 let baseUrl = 'http://localhost:8000'; 
 let routerMode = 'hash';
 let imgBaseUrl = '';
+let localapi = '';
+let proapi = '';
+
+
+
 
 
 if (process.env.NODE_ENV == 'development') {
@@ -24,4 +29,6 @@ export {
 	baseUrl,
 	routerMode,
 	imgBaseUrl,
+	localapi,
+	proapi
 }

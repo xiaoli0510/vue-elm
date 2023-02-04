@@ -1,5 +1,5 @@
 <script setup>
-import { reactive, computed,defineProps } from "vue";
+import { reactive, computed } from "vue";
 import { useStore, mapState } from "vuex";
 
 let state = reactive({

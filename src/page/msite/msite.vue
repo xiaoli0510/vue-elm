@@ -20,7 +20,7 @@ let state = reactive({
 });
 
 let route = useRoute();
-let stateStore = useStore();
+let storeState = useStore();
 
 onBeforeMount(async () => {
   if (!route.query.geohash) {
@@ -30,12 +30,12 @@ onBeforeMount(async () => {
     state.geohash = route.query.geohash;
   }
   //保存geohash 到vuex
-  stateStore.commit("SAVE_GEOHASH", state.geohash);
+  storeState.commit("SAVE_GEOHASH", state.geohash);
   //获取位置信息
   let res = await msiteAddress(state.geohash);
   state.msiteTitle = res.name;
   // 记录当前经度纬度
-  stateStore.commit("RECORD_ADDRESS", res);
+  storeState.commit("RECORD_ADDRESS", res);
 
   state.hasGetData = true;
 });

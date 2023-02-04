@@ -67,13 +67,13 @@ let state = reactive({
 let route = useRoute();
 let router = useRouter();
 
-let stateStore = useStore();
+let storeState = useStore();
 const currentInstance = getCurrentInstance();
 
 onBeforeMount(() => {
   state.geohash = route.query.geohash;
   state.shopId = route.query.id;
-  stateStore.commit("INIT_BUYCART");
+  storeState.commit("INIT_BUYCART");
 });
 
 onMounted(() => {
@@ -108,7 +108,7 @@ const minimumOrderAmount = computed(() => {
 
 //当前商店购物信息
 const shopCart = computed(() => {
-  return { ...stateStore.state.cartList[state.shopId] };
+  return { ...storeState.state.cartList[state.shopId] };
 });
 
 //购物车中总共商品的数量
@@ -122,17 +122,17 @@ const totalNum = computed(() => {
 
 //初始化时获取基本数据
 async function initData() {
-  if (!stateStore._state.latitude) {
+  if (!storeState._state.latitude) {
     //获取位置信息
     let res = await msiteAddress(state.geohash);
     //记录当前经纬度到vuex
-    stateStore.commit("RECORD_ADDRESS", res);
+    storeState.commit("RECORD_ADDRESS", res);
   }
   //获取商铺信息
   state.shopDetailData = await shopDetails(
     state.shopId,
-    stateStore._state.latitude,
-    stateStore._state.longitude
+    storeState._state.latitude,
+    storeState._state.longitude
   );
   //获取商铺食品列表
   state.menuList = await foodMenu(state.shopId);
@@ -142,7 +142,7 @@ async function initData() {
   state.ratingScoresData = await ratingScores(state.shopId);
   //评论Tag列表
   state.ratingTagsList = await ratingTags(state.shopId);
-  stateStore.commit("RECORD_SHOPDETAIL", state.shopDetailData);
+  storeState.commit("RECORD_SHOPDETAIL", state.shopDetailData);
   hideLoading();
 }
 
@@ -220,7 +220,7 @@ function showTitleDetail(index) {
 
 //加入购物车
 function addToCart(category_id, item_id, food_id, name, price, specs) {
-  stateStore.commit("ADD_CART", {
+  storeState.commit("ADD_CART", {
     shopid: state.shopId,
     category_id,
     item_id,
@@ -233,7 +233,7 @@ function addToCart(category_id, item_id, food_id, name, price, specs) {
 
 //移出购物车
 function removeOutCart(category_id, item_id, food_id, name, price, specs) {
-  stateStore.commit("REDUCE_CART", {
+  storeState.commit("REDUCE_CART", {
     shopid: state.shopId,
     category_id,
     item_id,
@@ -296,7 +296,7 @@ function toggleCartList() {
 //清除购物车
 function clearCart() {
   toggleCartList();
-  stateStore.commit("CLEAR_CART", state.shopId);
+  storeState.commit("CLEAR_CART", state.shopId);
 }
 
 //监听圆点是否进入购物车
@@ -372,7 +372,7 @@ function addSpecs(
   sku_id,
   stock
 ) {
-  stateStore.commit("ADD_CART", {
+  storeState.commit("ADD_CART", {
     shopid: state.shopId,
     category_id,
     item_id,
@@ -1264,7 +1264,7 @@ watch(
   top: 0;
   left: 0;
   width: 100%;
-  height: 2rem;
+  height: 1.5rem;
   z-index: 11;
   padding-top: 0.2rem;
   padding-left: 0.2rem;
