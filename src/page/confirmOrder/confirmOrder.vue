@@ -28,23 +28,23 @@
           </div>
           <div v-else class="address_detail_container">
             <header>
-              <span>{{ storeState.state.choosedAddress.name }}</span>
+              <span>{{ mainStore.choosedAddress.name }}</span>
               <span>{{
-                storeState.state.choosedAddress.sex == 1 ? "先生" : "女士"
+                mainStore.choosedAddress.sex == 1 ? "先生" : "女士"
               }}</span>
-              <span>{{ storeState.state.choosedAddress.phone }}</span>
+              <span>{{ mainStore.choosedAddress.phone }}</span>
             </header>
             <div class="address_detail">
               <span
-                v-if="storeState.state.choosedAddress.tag"
+                v-if="mainStore.choosedAddress.tag"
                 :style="{
                   backgroundColor: iconColor(
-                    storeState.state.choosedAddress.tag
+                    mainStore.choosedAddress.tag
                   ),
                 }"
-                >{{ storeState.state.choosedAddress.tag }}</span
+                >{{ mainStore.choosedAddress.tag }}</span
               >
-              <p>{{ storeState.state.choosedAddress.address_detail }}</p>
+              <p>{{ mainStore.choosedAddress.address_detail }}</p>
             </div>
           </div>
         </div>
@@ -139,7 +139,7 @@
           <span>订单备注</span>
           <div class="more_type">
             <span class="ellipsis">{{
-              storeState.state.remarkText || storeState.state.inputText
+              mainStore.remarkText || mainStore.inputText
                 ? remarklist
                 : "口味、偏好等"
             }}</span>
@@ -225,10 +225,9 @@
 </template>
 <script setup>
 import { reactive, onMounted, computed, watch } from "vue";
-import { useStore,mapState } from "vuex";
-
 import { useRouter, useRoute } from "vue-router";
-
+import { useMainStore } from "@/store1/index.js";
+import {storeToRefs} from 'pinia'
 import headTop from "@/components/header/head.vue";
 import alertTip from "@//components/common/alertTip.vue";
 import loading from "@/components/common/loading.vue";
@@ -242,7 +241,8 @@ import {
   getAddressList,
 } from "@/service/getData.js";
 import { imgBaseUrl } from "@/config/env.js";
-
+let mainStore = useMainStore();
+const {cartList,remarkText,inputText,invoice,choosedAddress,userInfo,remarklist} = storeToRefs(mainStore);
 let state = reactive({
   geohash: "", //geohash位置信息
   shopId: null, //商店id值
@@ -255,19 +255,6 @@ let state = reactive({
   showAlert: false, //弹出框
   alertText: null, //弹出框内容
 });
-
-const storeState = useStore();
-
-const aa = toolUseState(["cartList"]);
-console.log(aa.cartList)
-
-
-
-
-
-
-
-
 const router = useRouter();
 const route = useRoute();
 
@@ -276,59 +263,21 @@ onMounted(() => {
   state.geohash = route.query.geohash;
   //获取上个页面传递过来的shopid值
   state.shopId = route.query.shopId;
-  storeState.commit("INIT_BUYCART");
-  storeState.commit("SAVE_SHOPID", state.shopId);
+  mainStore.INIT_BUYCART();
+  mainStore.SAVE_SHOPID(state.shopId);
   //获取当前商铺购物车信息
-  state.shopCart = storeState.state.cartList[state.shopId];
+  state.shopCart = mainStore.cartList[state.shopId];
 
   if (state.geohash) {
     initData();
-    storeState.commit("SAVE_GEOHASH", state.geohash);
+    mainStore.SAVE_GEOHASH(state.geohash);
   }
-  if (!(storeState.state.userInfo && storeState.state.userInfo.user_id)) {
+  if (!(mainStore.userInfo && mainStore.userInfo.user_id)) {
     // this.showAlert = true;
     // this.alertText = '您还没有登录';
   }
 });
 
-const cartList = computed(() => {
-  return storeState.state.cartList;
-});
-
-const remarkText = computed(() => {
-  return storeState.state.remarkText;
-});
-const inputText = computed(() => {
-  return storeState.state.inputText;
-});
-const invoice = computed(() => {
-  return storeState.state.invoice;
-});
-const choosedAddress = computed(() => {
-  return storeState.state.choosedAddress;
-});
-const userInfo = computed(() => {
-  return storeState.state.userInfo;
-});
-//备注页返回的信息进行处理
-const remarklist = computed(() => {
-  let str = new String();
-  if (storeState.state.remarkText) {
-    Object.values(storeState.state.remarkText).forEach((item) => {
-      str += item[1] + "，";
-    });
-  }
-  //是否有自定义备注，分开处理
-  if (storeState.state.inputText) {
-    return str + storeState.state.inputText;
-  } else {
-    return str.substr(0, str.lastIndexOf("，"));
-  }
-});
-
-// ...mapMutations([
-//     'INIT_BUYCART', 'SAVE_GEOHASH', 'CHOOSE_ADDRESS', 'NEED_VALIDATION', 'SAVE_CART_ID_SIG', 'SAVE_ORDER_PARAM', 'ORDER_SUCCESS', 'SAVE_SHOPID'
-// ]),
 //初始化数据
 async function initData() {
   let newArr = new Array();
@@ -352,7 +301,7 @@ async function initData() {
   });
   //检验订单是否满足条件
   state.checkoutData = await checkout(state.geohash, [newArr], state.shopId);
-  storeState.commit("SAVE_CART_ID_SIG", {
+  mainStore.SAVE_CART_ID_SIG({
     cart_id: state.checkoutData.cart.id,
     sig: state.checkoutData.sig,
   });
@@ -362,10 +311,10 @@ async function initData() {
 }
 //获取地址信息，第一个地址为默认选择地址
 async function initAddress() {
-  if (storeState.state.userInfo && storeState.state.userInfo.user_id) {
-    const addressRes = await getAddressList(storeState.state.userInfo.user_id);
+  if (mainStore.userInfo && mainStore.userInfo.user_id) {
+    const addressRes = await getAddressList(mainStore.userInfo.user_id);
     if (addressRes instanceof Array && addressRes.length) {
-      storeState.commit("CHOOSE_ADDRESS", { address: addressRes[0], index: 0 });
+      mainStore.CHOOSE_ADDRESS({ address: addressRes[0], index: 0 });
     }
   }
 }
@@ -393,21 +342,21 @@ function iconColor(name) {
 //确认订单
 async function confrimOrder() {
   //用户未登录时弹出提示框
-  if (!(storeState.state.userInfo && storeState.state.userInfo.user_id)) {
+  if (!(mainStore.userInfo && mainStore.userInfo.user_id)) {
     state.showAlert = true;
     state.alertText = "请登录";
     return;
     //未选择地址则提示
-  } else if (!storeState.state.choosedAddress) {
+  } else if (!mainStore.choosedAddress) {
     state.showAlert = true;
     state.alertText = "请添加一个收货地址";
     return;
   }
   //保存订单
-  storeState.commit("SAVE_ORDER_PARAM", {
-    user_id: storeState.state.userInfo.user_id,
+  mainStore.SAVE_ORDER_PARAM({
+    user_id: mainStore.userInfo.user_id,
     cart_id: state.checkoutData.cart.id,
-    address_id: storeState.state.choosedAddress.id,
+    address_id: mainStore.choosedAddress.id,
     description: remarklist,
     entities: state.checkoutData.cart.groups,
     geohash: state.geohash,
@@ -415,26 +364,26 @@ async function confrimOrder() {
   });
   //发送订单信息
   let orderRes = await placeOrders(
-    storeState.state.userInfo.user_id,
+    mainStore.userInfo.user_id,
     state.checkoutData.cart.id,
-    storeState.state.choosedAddress.id,
-    storeState.state.remarklist,
+    mainStore.choosedAddress.id,
+    mainStore.remarklist,
     state.checkoutData.cart.groups,
     state.geohash,
     state.checkoutData.sig
   );
   //第一次下单的手机号需要进行验证，否则直接下单成功
   if (orderRes.need_validation) {
-    storeState.commit("NEED_VALIDATION", orderRes);
+    mainStore.NEED_VALIDATION(orderRes);
     router.push("/confirmOrder/userValidation");
   } else {
-    storeState.commit("ORDER_SUCCESS", orderRes);
+    mainStore.ORDER_SUCCESS(orderRes);
     router.push("/confirmOrder/payment");
   }
 }
 
 watch(
-  () => storeState.state.userInfo,
+  () => mainStore.userInfo,
   (value) => {
     if (value && value.user_id) {
       initAddress();

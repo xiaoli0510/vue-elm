@@ -12,6 +12,8 @@ import Shop from '../page/shop/shop.vue'
 import ShopDetail from '../page/shop//children/shopDetail.vue'
 import ShopSafe from '../page/shop//children/children/shopSafe.vue'
 import ConfirmOrder from '../page/confirmOrder/confirmOrder.vue'
+import Invoice from '../page/confirmOrder/children/invoice.vue'
+
 
 
 
@@ -70,7 +72,11 @@ const router = createRouter({
         }]
     },{
         path: '/confirmOrder',
-        component: ConfirmOrder
+        component: ConfirmOrder,
+        children:[{
+            path: 'invoice',
+            component: Invoice
+        }]
     }
 ],
 })

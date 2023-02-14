@@ -1,13 +1,13 @@
 <script setup>
 import { reactive, computed } from "vue";
-import { useStore, mapState } from "vuex";
+import { useMainStore } from "@/store1/index.js";
+import {storeToRefs} from 'pinia'
 
 let state = reactive({
   showMoveDot: [], //控制小圆点的显示隐藏
 });
-
-const stateSotre = useStore();
-
+const mainStore = useMainStore();
+const {cartList} = storeToRefs(mainStore);
 const props = defineProps({
   shopId: String,
   foods: Object,
@@ -33,7 +33,7 @@ function addToCart(
   stock,
   event
 ) {
-  stateSotre.commit("ADD_CART", {
+  mainStore.ADD_CART( {
     shopid: props.shopId,
     category_id,
     item_id,
@@ -54,7 +54,7 @@ function addToCart(
 //移出购物车
 function removeOutCart(category_id, item_id, food_id, name, price, specs, packing_fee, sku_id, stock) {
   if (foodNum.value > 0) {
-    stateSotre.commit("REDUCE_CART", {
+    mainStore.REDUCE_CART({
       shopid: props.shopId,
       category_id,
       item_id,
@@ -96,10 +96,6 @@ const foodNum = computed(() => {
 const shopCart = computed(() => {
   return Object.assign({}, cartList.value[props.shopId]);
 });
-
-const cartList = computed(()=>{
-    return stateSotre.state.cartList;
-})
 </script>
 <template>
   <section class="cart_module">
